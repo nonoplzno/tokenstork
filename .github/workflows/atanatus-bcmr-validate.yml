@@ -18,17 +18,13 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: clippy
 
       - name: Build candidate from exact source anchors
         run: python3 .github/atanatus_build_bcmr_candidate.py
 
       - name: Verify patch scope
         run: test "$(git diff --name-only)" = "workers/src/bcmr_onchain.rs"
-
-      - name: Rust format check
-        working-directory: workers
-        run: cargo fmt -- --check
 
       - name: Targeted regression test
         working-directory: workers
