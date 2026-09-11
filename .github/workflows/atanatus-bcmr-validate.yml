@@ -6,7 +6,7 @@ on:
       - fix/bcmr-well-known-resolution
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -37,3 +37,11 @@ jobs:
       - name: Clippy
         working-directory: workers
         run: cargo clippy --all-targets --release
+
+      - name: Materialize validated candidate
+        run: |
+          git config user.name "Nonoplzno"
+          git config user.email "163635659+nonoplzno@users.noreply.github.com"
+          git add workers/src/bcmr_onchain.rs
+          git commit -m "chore(bcmr): materialize validated candidate [skip ci]"
+          git push origin HEAD:fix/bcmr-well-known-resolution
