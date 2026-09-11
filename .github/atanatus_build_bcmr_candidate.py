@@ -54,8 +54,7 @@ s = replace_once(
 test_anchor = '    #[test]\n    fn body_archive_routes_by_verification_and_size() {'
 regression = '''    #[test]
     fn resolves_bcmr_publication_uris() {
-        let well_known =
-            "https://example.com/.well-known/bitcoin-cash-metadata-registry.json";
+        let well_known = "https://example.com/.well-known/bitcoin-cash-metadata-registry.json";
 
         assert_eq!(resolve_bcmr_uri("example.com").as_deref(), Some(well_known));
         assert_eq!(
