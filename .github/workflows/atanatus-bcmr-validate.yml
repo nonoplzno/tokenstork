@@ -21,22 +21,24 @@ jobs:
           components: rustfmt, clippy
 
       - name: Build candidate from exact source anchors
-        shell: python
+        shell: bash
         run: |
+          set -euo pipefail
+          python3 - <<'PY'
           from pathlib import Path
 
           path = Path('workers/src/bcmr_onchain.rs')
           s = path.read_text(encoding='utf-8')
 
-          def replace_once(old: str, new: str, label: str):
-              count = s.count(old)
+          def replace_once(source: str, old: str, new: str, label: str) -> str:
+              count = source.count(old)
               if count != 1:
                   raise SystemExit(f'{label}: expected 1 anchor, found {count}')
-              return s.replace(old, new, 1)
+              return source.replace(old, new, 1)
 
           old = 'const BCMR_MAGIC: [u8; 4] = *b"BCMR";'
           new = old + '\nconst BCMR_WELL_KNOWN_PATH: &str = "/.well-known/bitcoin-cash-metadata-registry.json";'
-          s = replace_once(old, new, 'constant')
+          s = replace_once(s, old, new, 'constant')
 
           fetch_doc = '/// Fetch the BCMR JSON pointed at by `uri` and verify its sha256 matches'
           resolver = '''/// Resolve a BCMR publication URI using BCMR-specific HTTPS semantics.
@@ -65,9 +67,10 @@ fn resolve_bcmr_uri(uri: &str) -> Option<String> {
 }
 
 '''
-          s = replace_once(fetch_doc, resolver + fetch_doc, 'resolver insertion')
+          s = replace_once(s, fetch_doc, resolver + fetch_doc, 'resolver insertion')
 
           s = replace_once(
+              s,
               'let url = match resolve_icon_url(uri) {',
               'let url = match resolve_bcmr_uri(uri) {',
               'fetch callsite',
@@ -109,9 +112,10 @@ fn resolve_bcmr_uri(uri: &str) -> Option<String> {
     }
 
 '''
-          s = replace_once(test_anchor, regression + test_anchor, 'test insertion')
+          s = replace_once(s, test_anchor, regression + test_anchor, 'test insertion')
 
           path.write_text(s, encoding='utf-8')
+          PY
 
       - name: Verify patch scope
         shell: bash
