@@ -1,0 +1,47 @@
+name: Validate BCMR well-known resolver
+
+on:
+  push:
+    branches:
+      - fix/bcmr-well-known-resolution
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Apply candidate patch
+        run: git apply --check .github/atanatus-bcmr-well-known.patch && git apply .github/atanatus-bcmr-well-known.patch
+
+      - name: Verify patch scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = "workers/src/bcmr_onchain.rs"
+
+      - name: Rust format check
+        working-directory: workers
+        run: cargo fmt -- --check
+
+      - name: Targeted regression test
+        working-directory: workers
+        run: cargo test --release --lib resolves_bcmr_publication_uris
+
+      - name: Full worker library tests
+        working-directory: workers
+        run: cargo test --release --lib
+
+      - name: Clippy
+        working-directory: workers
+        run: cargo clippy --all-targets --release
